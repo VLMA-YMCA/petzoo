@@ -1,0 +1,71 @@
+# Vuosaari reporter with PANDAS
+
+import pandas as pd
+import os
+import csv
+
+pd.options.display.max_columns = None
+pd.options.display.max_rows = None
+
+# READING FILES 
+stockreport = pd.read_excel(r'C:\Users\lva.vmarcelonoks\AppData\Local\Programs\coding\PetProject\Vousaari reporter\cma query.xlsx')
+offsets = pd.read_excel(r'C:\Users\lva.vmarcelonoks\AppData\Local\Programs\coding\PetProject\Vousaari reporter\offsets.xlsx')
+template = pd.read_excel(r'C:\Users\lva.vmarcelonoks\AppData\Local\Programs\coding\PetProject\Vousaari reporter\template.xlsx')
+offset = pd.read_excel(r'C:\Users\lva.vmarcelonoks\AppData\Local\Programs\coding\PetProject\Vousaari reporter\offsets.xlsx')
+output = template
+
+### COUNTERS
+
+#TOTAL COUNTER
+def total_counter (input_stock, outputstock, container_type):
+    outputstock.loc[output["Type"] == container_type, "Total"] = (input_stock["Type"] == container_type).sum() 
+    #total
+
+    outputstock.loc[output["Type"] == container_type, "OK condition"] = ((input_stock["Type"] == container_type) & (input_stock["Owner"] == "CMA") & (input_stock["Cond"] == "-")).sum() 
+    #OK condition
+
+    return outputstock.loc[output["Type"] == container_type, "Total"].values[0], outputstock.loc[output["Type"] == container_type, "OK condition"].values[0]
+    #, print(
+    #     "container_type ", container_type, 
+    #     "total ", outputstock.loc[output["Type"] == container_type, "Total"].values[0], 
+    #     "OK condition", outputstock.loc[output["Type"] == container_type, "OK condition"].values[0]
+        # )
+
+#AVAILBLE COUNTER
+def available_counter (stock, offset, container_type):
+
+    # Total
+    stock.loc[stock["Type"] == container_type, "Total"] = stock.loc[stock["Type"] == container_type, "Total"].values[0] - offset.loc[offset["Type"] == container_type, "QTY"].values[0]
+
+    # OK condition
+    stock.loc[stock["Type"] == container_type, "OK condition"] = stock.loc[stock["Type"] == container_type, "OK condition"].values[0] - offset.loc[offset["Type"] == container_type, "QTY"].values[0]
+    
+    return stock.loc[stock["Type"] == container_type, "Total"].values[0], stock.loc[stock["Type"] == container_type, "OK condition"].values[0]
+
+### APPLYING COUNTERS
+
+total_counter (stockreport, output, "20'HW")
+total_counter (stockreport, output, "20'W")
+total_counter (stockreport, output, "40'HCW")
+total_counter (stockreport, output, "40'W")
+total_counter (stockreport, output, "45'HCW")
+total_counter (stockreport, output, "45'PCHW")
+total_counter (stockreport, output, "45'RFH")
+total_counter (stockreport, output, "45'HCW")
+
+total_stock = output.copy()
+available_stock = output.copy()
+
+available_counter (available_stock, offset, "20'HW")
+available_counter (available_stock, offset, "20'W")
+available_counter (available_stock, offset, "40'HCW")
+available_counter (available_stock, offset, "40'W")
+available_counter (available_stock, offset, "45'HCW")
+available_counter (available_stock, offset, "45'PCHW")
+available_counter (available_stock, offset, "45'RFH")
+available_counter (available_stock, offset, "45'HCW")
+
+### WRITING THE OUTPUT FILES
+
+total_stock.to_excel(r'C:\Users\lva.vmarcelonoks\AppData\Local\Programs\coding\PetProject\Vousaari reporter\total vuosaari stock.xlsx', index=False)
+available_stock.to_excel(r'C:\Users\lva.vmarcelonoks\AppData\Local\Programs\coding\PetProject\Vousaari reporter\available vuosaari stock.xlsx', index=False)
